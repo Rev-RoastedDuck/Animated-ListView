@@ -1,0 +1,17 @@
+*.a
+*.txt
+
+# 编译文件
+build/
+dist/
+
+# python缓存文件
+__pycache__/
+
+
+# pycharm
+.idea/
+
+# 用户数据
+User-Data-Store/
+app_data/
