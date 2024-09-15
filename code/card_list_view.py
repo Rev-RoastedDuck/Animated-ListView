@@ -87,6 +87,7 @@ class CardListView(QListView):
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Delete:
             self.delItem()
+        
 
     def delItem(self):
         selected_indexes = self.selectedIndexes()
