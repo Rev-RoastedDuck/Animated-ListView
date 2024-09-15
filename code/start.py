@@ -1,4 +1,3 @@
-from PySide6 import QtCore
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QWidget, QApplication, QListView, QVBoxLayout
@@ -52,11 +51,7 @@ if __name__ == "__main__":
     listView.setModel(model)
 
     # listView.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    listView.setViewMode(QListView.IconMode)
     listView.setFlow(QListView.LeftToRight)
-    listView.setWrapping(False)
-    listView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-    listView.setSpacing(0)
     listView.setIconSize(QSize(200, 100))
 
     layout = QVBoxLayout()

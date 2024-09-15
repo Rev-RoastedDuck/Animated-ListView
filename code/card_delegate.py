@@ -1,15 +1,16 @@
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtCore import Qt, QSize, QRect, QModelIndex, QPropertyAnimation, QEasingCurve
 from PySide6.QtWidgets import QStyledItemDelegate, QListView, QStyleOptionViewItem, QStyle
 
+from card_painter import CardPainter
 
 
 class CardDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.y_spacing = None
-        self.x_spacing = None
+        self.x_spacing = 10
+        self.y_spacing = 10
 
         self.__is_dragging = False
         self.__is_dragged_index = False
@@ -67,7 +68,7 @@ class CardDelegate(QStyledItemDelegate):
 
         if self.__list_view.model():
             count_row = self.__list_view.model().rowCount()
-            self.updateAllIndexByRange(0, count_row)
+            self.__updateAllIndexByRange(0, count_row)
 
     def __onMoveDownFinished(self):
         self.__has_anim_move_down_finished = True
@@ -78,13 +79,13 @@ class CardDelegate(QStyledItemDelegate):
         index_row = self.__anim_index.row()
         if self.__list_view.model():
             count_row = self.__list_view.model().rowCount()
-            self.updateAllIndexByRange(index_row, count_row)
+            self.__updateAllIndexByRange(index_row, count_row)
 
     def __onReduceWidthFinished(self):
         self.__has_anim_reduce_width_finished = True
         self.__list_view.model().removeRow(self.__anim_index.row())
 
-    def updateAllIndexByRange(self, start, end):
+    def __updateAllIndexByRange(self, start, end):
         model = self.__list_view.model()
         for row in range(start, end):
             index = model.index(row, 0)
@@ -106,75 +107,22 @@ class CardDelegate(QStyledItemDelegate):
         if self.__anim_index == index and not self.__has_anim_reduce_width_finished and self.__has_anim_move_down_finished:
             return
 
-        self.drawBackground(painter, option)
-        self.drawText(painter, option, index)
+        rect: QRect = option.rect
+        rect = self.__adjustRect(rect)
+        CardPainter.drawBackground(painter,rect,QColor(20, 109, 109) if option.state & QStyle.State_Selected else QColor(45, 134, 134))
+        CardPainter.drawText(painter,rect,index)
 
         if self.__dragged_index == index and self.__is_dragging:
-            self.drawRightBorder(painter, option)
+            CardPainter.drawShadow(painter,rect)
             self.__is_dragged_index = True
 
-    def adjustRect(self, rect: QRect):
-        self.x_spacing = 10
-        self.y_spacing = 10
+    def __adjustRect(self, rect: QRect):
         rect = QRect(rect.x() + self.x_spacing,
                      rect.y() + self.y_spacing,
                      rect.width() - self.x_spacing,
                      rect.height() - self.y_spacing)
 
         return rect
-
-    def drawBackground(self, painter: QPainter, option: QStyleOptionViewItem):
-        rect: QRect = option.rect
-        rect = self.adjustRect(rect)
-
-        painter.save()
-
-        if option.state & QStyle.State_Selected:
-            painter.setBrush(QColor(20, 109, 109))
-        else:
-            painter.setBrush(QColor(45, 134, 134))
-
-        painter.drawRoundedRect(rect, 10, 10)
-
-        painter.restore()
-
-    def drawRightBorder(self, painter: QPainter, option: QStyleOptionViewItem):
-        rect: QRect = option.rect
-        rect = self.adjustRect(rect)
-        painter.save()
-        painter.setBrush(QColor(0, 0, 0, 100))
-        painter.setPen(Qt.NoPen)
-        painter.drawRect(rect)
-
-        painter.restore()
-
-    def drawText(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
-        card_data = index.data(Qt.DisplayRole)
-        if not isinstance(card_data, dict):
-            return
-
-        rect: QRect = option.rect
-        rect = self.adjustRect(rect)
-
-        title = card_data.get("title", "")
-        description = card_data.get("description", "")
-
-        painter.save()
-
-        title_rect = rect.adjusted(10, 10, -10, -30)
-        description_rect = rect.adjusted(10, 50, -10, -10)
-
-        painter.setPen(QColor(255, 255, 255))
-        font = QFont("Arial", 16, QFont.Bold)
-        painter.setFont(font)
-        painter.drawText(title_rect, Qt.AlignLeft | Qt.TextWordWrap, title)
-
-        font = QFont("Corbel", 11)
-        painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(description_rect, Qt.AlignLeft | Qt.TextWordWrap, description)
-
-        painter.restore()
 
     def setEditorData(self, editor, index):
         pass
