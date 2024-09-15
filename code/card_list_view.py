@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QListView
-from PySide6.QtCore import Qt, QRect, QModelIndex, QTimer
-from PySide6.QtGui import QStandardItem, QDragEnterEvent,QDropEvent, QDragMoveEvent, QMouseEvent, QKeyEvent
+from PySide6.QtCore import Qt, QRect, QModelIndex, QTimer, QPoint, QSize
+from PySide6.QtGui import QStandardItem, QDragEnterEvent, QDropEvent, QDragMoveEvent, QMouseEvent, QKeyEvent, QPixmap, \
+    QPainter, QDrag, QColor, QFont
 
 from card_delegate import CardDelegate
-
 
 
 class CardListView(QListView):
@@ -18,6 +18,64 @@ class CardListView(QListView):
 
         self.setAutoScroll(False)
         self.scrollAreaTimerInit()
+
+    def drawBackground(self, painter: QPainter, rect: QRect):
+        painter.save()
+        painter.setBrush(QColor(45, 134, 134))
+
+        painter.drawRoundedRect(rect, 10, 10)
+
+        painter.restore()
+
+    def drawText(self, painter: QPainter, rect: QRect, index: QModelIndex):
+        card_data = index.data(Qt.DisplayRole)
+        if not isinstance(card_data, dict):
+            return
+
+        title = card_data.get("title", "")
+        description = card_data.get("description", "")
+
+        painter.save()
+
+        title_rect = rect.adjusted(10, 10, -10, -30)
+        description_rect = rect.adjusted(10, 50, -10, -10)
+
+        painter.setPen(QColor(255, 255, 255))
+        font = QFont("Arial", 16, QFont.Bold)
+        painter.setFont(font)
+        painter.drawText(title_rect, Qt.AlignLeft | Qt.TextWordWrap, title)
+
+        font = QFont("Corbel", 11)
+        painter.setFont(font)
+        painter.setPen(QColor(255, 255, 255))
+        painter.drawText(description_rect, Qt.AlignLeft | Qt.TextWordWrap, description)
+
+        painter.restore()
+
+    def startDrag(self, supportedActions):
+        index = self.currentIndex()
+        if not index.isValid():
+            return
+
+        item_size = self.sizeHintForIndex(index)
+
+        pixmap = QPixmap(item_size)
+        pixmap.fill(Qt.transparent)
+
+        painter = QPainter(pixmap)
+        painter.setPen(Qt.NoPen)
+        painter.setRenderHint(QPainter.Antialiasing)
+        self.drawBackground(painter,QRect(0,0,item_size.width(),item_size.height()))
+        self.drawText(painter,QRect(0,0,item_size.width(),item_size.height()),index)
+        painter.end()
+
+        drag = QDrag(self)
+        mime_data = self.model().mimeData(self.selectedIndexes())
+        drag.setMimeData(mime_data)
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(QPoint(pixmap.width() // 2, pixmap.height() // 2))
+        drag.exec_(supportedActions)
+
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         super().dragEnterEvent(event)
@@ -87,7 +145,6 @@ class CardListView(QListView):
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Delete:
             self.delItem()
-        
 
     def delItem(self):
         selected_indexes = self.selectedIndexes()
@@ -104,4 +161,3 @@ class CardListView(QListView):
 
     def addItem(self):
         pass
-
