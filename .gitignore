@@ -11,7 +11,3 @@ __pycache__/
 
 # pycharm
 .idea/
-
-# 用户数据
-User-Data-Store/
-app_data/

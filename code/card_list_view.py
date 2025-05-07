@@ -24,6 +24,7 @@ class CardListView(QListView):
 
         self.setSpacing(0)
         self.setWrapping(False)
+        self.setDragDropOverwriteMode(True)
         self.setViewMode(QListView.IconMode)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
@@ -57,7 +58,8 @@ class CardListView(QListView):
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         super().dragEnterEvent(event)
         self.__is_dragging = True
-        self.__dragged_item = self.indexAt(event.position().toPoint())
+        if not  self.__dragged_item:
+            self.__dragged_item = self.indexAt(event.position().toPoint())
 
     def dropEvent(self, event: QDropEvent) -> None:
         super().dropEvent(event)
@@ -71,6 +73,8 @@ class CardListView(QListView):
         data = self.__dragged_item.data()
         dragged_row_old = self.__dragged_item.row()
         dragged_row_new = self.indexAt(event.position().toPoint()).row()
+
+        self.__dragged_item = None
 
         self.model().removeRow(dragged_row_old)
 
