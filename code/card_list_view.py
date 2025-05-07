@@ -2,8 +2,7 @@ from PySide6 import QtCore
 from PySide6.QtWidgets import QListView
 from PySide6.QtCore import Qt, QRect, QModelIndex, QTimer, QPoint
 from PySide6.QtGui import QStandardItem, QDragEnterEvent, QDropEvent, QDragMoveEvent, QMouseEvent, QKeyEvent, QPixmap, \
-    QPainter, QDrag, QColor
-
+    QPainter, QDrag, QColor, QDragLeaveEvent
 
 from card_delegate import CardDelegate
 from card_painter import CardPainter
@@ -84,6 +83,16 @@ class CardListView(QListView):
 
         index = self.model().index(dragged_row_new, 0, QModelIndex())
         self.setCurrentIndex(index)
+
+    def dragLeaveEvent(self, event: QDragLeaveEvent):
+        super().dragLeaveEvent(event)
+        self.__is_dragging = False
+        self.__dragged_item = None
+        self.__scroll_bar_timer.stop()
+
+        delegate = self.itemDelegate()
+        if isinstance(delegate, CardDelegate):
+            delegate.setDragStatus(False)
 
     def dragMoveEvent(self, event: QDragMoveEvent):
         super().dragMoveEvent(event)
